@@ -1,28 +1,107 @@
-import os
-from flask import Flask, send_from_directory, render_template, redirect
+from flask import Flask, request, jsonify
+import json
+import spacy
+from spellchecker import SpellChecker
 
 app = Flask(__name__)
 
-port = int(os.environ.get("PORT", 5000))
+# Carga el modelo de lenguaje de spaCy en español
+nlp = spacy.load("es_core_news_sm")
+spell = SpellChecker(language='es')
 
-@app.route('/static/<path:path>')
-def serve_static(path):
-    return send_from_directory('static', path)
-listSing = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','ñ','o']
-exclude = ['el','la','los','les']
+# Diccionario de palabras disponibles
+available_words = {
+    "hola": "hola",
+    "nombre": "nombre",
+    "a": "a",
+    "b": "b",
+    "c": "c",
+    "d": "d",
+    "e": "e",
+    "f": "f",
+    "g": "g",
+    "h": "h",
+    "i": "i",
+    "j": "j",
+    "k": "k",
+    "l": "l",
+    "ll": "ll",
+    "m": "m",
+    "n": "n",
+    "ñ": "ñ",
+    "o": "o",
+    "p": "p",
+    "q": "q",
+    "r": "r",
+    "rr": "rr",
+    "s": "s",
+    "t": "t",
+    "u": "u",
+    "v": "v",
+    "w": "w",
+    "x": "x",
+    "y": "y",
+    "z": "z",
+    "0": "0",
+    "1": "1",
+    "2": "2",
+    "3": "3",
+    "4": "4",
+    "5": "5",
+    "6": "6",
+    "7": "7",
+    "8": "8",
+    "9": "9"
+}
+
+not_active_words = {
+    "es": "es",
+    "la": "la",
+    "los": "los",
+    "de": "de",
+}
+
+def translate_to_array(sign_language_phrase):
+    doc = nlp(sign_language_phrase)
+    translated_array = []
+
+    corrected_tokens = [{
+                        "idx":token.idx,
+                        "token":token,
+                        "text":spell.correction(token.text.lower())} 
+                for token in doc]
+
+    cleaned_tokens = [item for item in corrected_tokens if not item['token'].is_punct]
+
+    for item in cleaned_tokens:
+        if item["text"] in available_words:
+            translated_array.append({"ref":item["idx"],"sing":available_words[item["text"]]})
+        else:
+            if item["text"] in not_active_words: 
+                continue
+            for char in item["text"]:
+                if char in available_words:
+                    translated_array.append({"ref":item["idx"],"sing":available_words[char]})
+    return json.dumps(translated_array)
+
 
 @app.route("/")
-def home():
-    sings = ['h','o','l','a']
-    #retorna un objeto json
-    return {
-        "msg": "hola",
-        "sings": sings
-    }
+def hello_world():
+    return "funcionando"
+    
 
-@app.route('/<path:path>')
-def all_routes(path):
-    return redirect('/')
+@app.route('/translate', methods=['POST'])
+def translate():
+    try:
+        data = request.get_json()
+        input_phrase = data.get("phrase", "")
+        if input_phrase:
+            translated_result = translate_to_array(input_phrase)
+            return jsonify({"result": translated_result}), 200
+        else:
+            return jsonify({"error": "No input phrase provided"}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
-if __name__ == "__main__":
-    app.run(port=port)
+if __name__ == '__main__':
+    app.run(debug=True)
