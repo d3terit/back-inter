@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
-import json
 import spacy
 from spellchecker import SpellChecker
+from unidecode import unidecode
 
 app = Flask(__name__)
 
@@ -10,56 +10,54 @@ nlp = spacy.load("es_core_news_sm")
 spell = SpellChecker(language='es')
 
 # Diccionario de palabras disponibles
-available_words = {
-    "hola": "hola",
-    "nombre": "nombre",
-    "a": "a",
-    "b": "b",
-    "c": "c",
-    "d": "d",
-    "e": "e",
-    "f": "f",
-    "g": "g",
-    "h": "h",
-    "i": "i",
-    "j": "j",
-    "k": "k",
-    "l": "l",
-    "ll": "ll",
-    "m": "m",
-    "n": "n",
-    "ñ": "ñ",
-    "o": "o",
-    "p": "p",
-    "q": "q",
-    "r": "r",
-    "rr": "rr",
-    "s": "s",
-    "t": "t",
-    "u": "u",
-    "v": "v",
-    "w": "w",
-    "x": "x",
-    "y": "y",
-    "z": "z",
-    "0": "0",
-    "1": "1",
-    "2": "2",
-    "3": "3",
-    "4": "4",
-    "5": "5",
-    "6": "6",
-    "7": "7",
-    "8": "8",
-    "9": "9"
-}
+available_words = [
+    "a",
+    "b",
+    "c",
+    "d",
+    "e",
+    "f",
+    "g",
+    "h",
+    "i",
+    "j",
+    "k",
+    "l",
+    "ll",
+    "m",
+    "n",
+    "ñ",
+    "o",
+    "p",
+    "q",
+    "r",
+    "rr",
+    "s",
+    "t",
+    "u",
+    "v",
+    "w",
+    "x",
+    "y",
+    "z",
+]
 
-not_active_words = {
-    "es": "es",
-    "la": "la",
-    "los": "los",
-    "de": "de",
-}
+not_active_words = [
+    "es",
+    "la",
+    "los",
+    "las",
+    "el",
+    "les",
+    "de",
+    "del",
+    "al"
+]
+
+def formatText(input_str):
+    temp = spell.correction(input_str.lower())
+    temp = temp.replace("ñ","__tempni__")
+    return unidecode(temp).replace("__tempni__","ñ")
 
 def translate_to_array(sign_language_phrase):
     doc = nlp(sign_language_phrase)
@@ -68,21 +66,38 @@ def translate_to_array(sign_language_phrase):
     corrected_tokens = [{
                         "idx":token.idx,
                         "token":token,
-                        "text":spell.correction(token.text.lower())} 
+                        "text": formatText(token.text)}
                 for token in doc]
-
+    
     cleaned_tokens = [item for item in corrected_tokens if not item['token'].is_punct]
 
     for item in cleaned_tokens:
         if item["text"] in available_words:
-            translated_array.append({"ref":item["idx"],"sing":available_words[item["text"]]})
+            # translated_array.append({"ref":item["idx"],"sing":available_words[item["text"]]})
+            translated_array.append(item["text"])
         else:
             if item["text"] in not_active_words: 
                 continue
-            for char in item["text"]:
-                if char in available_words:
-                    translated_array.append({"ref":item["idx"],"sing":available_words[char]})
-    return json.dumps(translated_array)
+            #encontrar patrrones de rr y ll dentro de la palabra
+            if "rr" in item["text"]:
+                for part in item["text"].split("rr"):
+                    for letter in part:
+                        translated_array.append(letter)
+                    if part != item["text"].split("rr")[-1]:
+                        translated_array.append("rr")
+            elif "ll" in item["text"]:
+                for part in item["text"].split("ll"):
+                    for letter in part:
+                        translated_array.append(letter)
+                    if part != item["text"].split("ll")[-1]:
+                        translated_array.append("ll")
+                    
+            else:
+                #si no tiene rr o ll, añadir cada letra
+                for letter in item["text"]:
+                    translated_array.append(letter)
+
+    return translated_array
 
 
 @app.route("/")
