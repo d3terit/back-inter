@@ -72,28 +72,28 @@ def translate_to_array(sign_language_phrase):
 
     for item in cleaned_tokens:
         if item["text"] in available_words:
-            translated_array.append({"sing":item["text"], "text":item["text"]})
+            translated_array.append({"sign":item["text"], "text":item["text"]})
         else:
             if item["text"] in not_active_words:
-                translated_array.append({"sing":None, "text":item["token"].text })
+                translated_array.append({"sign":None, "text":item["token"].text })
             #encontrar patrrones de rr y ll dentro de la palabra
             elif "rr" in item["text"]:
                 for part in item["text"].split("rr"):
                     for letter in part:
-                        translated_array.append({"sing":letter, "text":letter})
+                        translated_array.append({"sign":letter, "text":letter})
                     if part != item["text"].split("rr")[-1]:
-                        translated_array.append({"sing":"rr", "text":"rr"})
+                        translated_array.append({"sign":"rr", "text":"rr"})
             elif "ll" in item["text"]:
                 for part in item["text"].split("ll"):
                     for letter in part:
-                        translated_array.append({"sing":letter, "text":letter})
+                        translated_array.append({"sign":letter, "text":letter})
                     if part != item["text"].split("ll")[-1]:
-                        translated_array.append({"sing":"ll", "text":"ll"})
+                        translated_array.append({"sign":"ll", "text":"ll"})
             else:
                 #si no tiene rr o ll, añadir cada letra
                 for letter in item["text"]:
-                    translated_array.append({"sing":letter, "text":letter})
-        translated_array.append({"sing":None, "text":" " })
+                    translated_array.append({"sign":letter, "text":letter})
+        translated_array.append({"sign":None, "text":" " })
     return translated_array
 
 @app.route("/")
