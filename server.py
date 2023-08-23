@@ -80,9 +80,9 @@ def translate_to_array(sign_language_phrase):
             elif "rr" in item["text"]:
                 for part in item["text"].split("rr"):
                     for letter in part:
-                        translated_array.append({"ref":item["idx"]+index,"sing":letter, "text":letter})
+                        translated_array.append({"sing":letter, "text":letter})
                     if part != item["text"].split("rr")[-1]:
-                        translated_array.append({"ref":item["idx"]+index,"sing":"rr", "text":"rr"})
+                        translated_array.append({"sing":"rr", "text":"rr"})
             elif "ll" in item["text"]:
                 for part in item["text"].split("ll"):
                     for letter in part:
