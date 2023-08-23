@@ -40,6 +40,7 @@ available_words = [
     "x",
     "y",
     "z",
+    'hola',
 ]
 
 not_active_words = [
