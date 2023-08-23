@@ -64,7 +64,6 @@ def translate_to_array(sign_language_phrase):
     translated_array = []
 
     corrected_tokens = [{
-                        "idx":token.idx,
                         "token":token,
                         "text": formatText(token.text)}
                 for token in doc]
@@ -73,37 +72,33 @@ def translate_to_array(sign_language_phrase):
 
     for item in cleaned_tokens:
         if item["text"] in available_words:
-            # translated_array.append({"ref":item["idx"],"sing":available_words[item["text"]]})
-            translated_array.append(item["text"])
+            translated_array.append({"sing":item["text"], "text":item["text"]})
         else:
-            if item["text"] in not_active_words: 
-                continue
+            if item["text"] in not_active_words:
+                translated_array.append({"sing":None, "text":item["token"].text })
             #encontrar patrrones de rr y ll dentro de la palabra
-            if "rr" in item["text"]:
+            elif "rr" in item["text"]:
                 for part in item["text"].split("rr"):
                     for letter in part:
-                        translated_array.append(letter)
+                        translated_array.append({"ref":item["idx"]+index,"sing":letter, "text":letter})
                     if part != item["text"].split("rr")[-1]:
-                        translated_array.append("rr")
+                        translated_array.append({"ref":item["idx"]+index,"sing":"rr", "text":"rr"})
             elif "ll" in item["text"]:
                 for part in item["text"].split("ll"):
                     for letter in part:
-                        translated_array.append(letter)
+                        translated_array.append({"sing":letter, "text":letter})
                     if part != item["text"].split("ll")[-1]:
-                        translated_array.append("ll")
-                    
+                        translated_array.append({"sing":"ll", "text":"ll"})
             else:
                 #si no tiene rr o ll, añadir cada letra
                 for letter in item["text"]:
-                    translated_array.append(letter)
-
+                    translated_array.append({"sing":letter, "text":letter})
+        translated_array.append({"sing":None, "text":" " })
     return translated_array
-
 
 @app.route("/")
 def hello_world():
     return "funcionando"
-    
 
 @app.route('/translate', methods=['POST'])
 def translate():
