@@ -56,7 +56,8 @@ not_active_words = [
 ]
 
 def formatText(input_str):
-    temp = spell.correction(input_str.lower())
+    # temp = spell.correction(input_str.lower())
+    temp = input_str.lower()
     temp = temp.replace("ñ","__tempni__")
     return unidecode(temp).replace("__tempni__","ñ")
 
@@ -77,7 +78,6 @@ def translate_to_array(sign_language_phrase):
         else:
             if item["text"] in not_active_words:
                 translated_array.append({"sign":None, "text":item["token"].text })
-            #encontrar patrrones de rr y ll dentro de la palabra
             elif "rr" in item["text"]:
                 for part in item["text"].split("rr"):
                     for letter in part:
@@ -91,7 +91,6 @@ def translate_to_array(sign_language_phrase):
                     if part != item["text"].split("ll")[-1]:
                         translated_array.append({"sign":"ll", "text":"ll"})
             else:
-                #si no tiene rr o ll, añadir cada letra
                 for letter in item["text"]:
                     translated_array.append({"sign":letter, "text":letter})
         translated_array.append({"sign":None, "text":" " })
